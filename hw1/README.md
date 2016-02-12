@@ -70,7 +70,7 @@ H. Development History
 | Method        | Precision           | Recall  |   AER(dev) | 
 | ------------- |:-------------:| -----:| --------:|
 |IBM1 (No preprocessing)|0.54426|0.617689|0.422871|
-|IBM1 (null, lower, stemmer, exact match) 0.611936|0.695208|0.350789|
+|IBM1 (null, lower, stemmer, exact match) |0.611936|0.695208|0.350789|
 |HMM (No preprocessing)|0.648201|0.718816|0.320189|
 |IBM1 (3+symmetry)|0.7558|0.613108|0.32068|
 |Test no Null / compound|0.566533|0.638125|0.40142|
