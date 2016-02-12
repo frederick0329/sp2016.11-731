@@ -87,7 +87,7 @@ H. Development History
 |HMM, stem, exact match no(' , ', 'die', 'am')|0.66962|0.749471|0.294619|
 |HMM, stem, exact match no(' , ', 'die', 'am') + symmetry|0.715726|0.717407|0.28348|
 |IBM1 (5+ pretrain p_e_f+p_f_e, n=5000, i=5)|0.767914|0.646934|0.296262|
-|IBM1 (5+ pretrain p_e_f+p_f_e, n=100000, i=10)|0.786612||0.704017|0.255684|
+|IBM1 (5+ pretrain p_e_f+p_f_e, n=100000, i=10)|0.786612|0.704017|0.255684|
 |HMM, stem, exact match, compound, no(' , ', 'die', 'am')|0.702|0.781184|0.262543|
 |HMM, stem, exact match, compound, no(' , ', 'die', 'am') + symmetry|0.714454|0.763566|0.263192|
 |Combine 22 forward + 20 backward, ~/qq.al|0.768205|0.754405|0.238417|
