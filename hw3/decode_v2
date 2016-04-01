@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+import argparse
+import sys
+import models
+import heapq
+from collections import namedtuple
+
+parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
+parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
+parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
+parser.add_argument('-s', '--stack-size', dest='s', default=1000, type=int, help='Maximum stack size (default=1)')
+parser.add_argument('--rescore', default=50, type=int, help='Number of hypotheses to rescore with marginal per sentence')
+parser.add_argument('-n', '--num_sentences', dest='num_sents', default=sys.maxint, type=int, help='Number of sentences to decode (default=no limit)')
+parser.add_argument('-l', '--language-model', dest='lm', default='data/lm', help='File containing ARPA-format language model (default=data/lm)')
+parser.add_argument('-d', '--eta', dest='eta', default=-1, type=float, help='penalty parameter')
+opts = parser.parse_args()
+
+tm = models.TM(opts.tm, sys.maxint)
+lm = models.LM(opts.lm)
+sys.stderr.write('Decoding %s...\n' % (opts.input,))
+input_sents = [tuple(line.strip().split()) for line in open(opts.input).readlines()[:opts.num_sents]]
+
+hypothesis = namedtuple('hypothesis', 'logprob, lm_state, english, end_pos')
+
+
+def decode(size, f):
+      uncovered = tuple(0 for _ in f)
+      initial_hypothesis = hypothesis(0.0, lm.begin(), "", -1.0)
+      stacks = [{} for _ in f] + [{}]
+      stacks[0][(initial_hypothesis.lm_state, uncovered)] = initial_hypothesis
+      #min score of each stack
+      stack_min = [0 for _ in stacks]
+      for m, stack in enumerate(stacks[:-1]):
+        # extend the top s hypotheses in the current stack
+        #key (english: lm_state, cov: covered source)
+        #value h
+        for (_, cov), h in heapq.nlargest(opts.s, stack.iteritems(), key=lambda (_, h): h.logprob + h.fcost):
+          #the new phrase to consider starts from i
+          for i in xrange(0, len(f)):
+            if cov[i] == 1: continue
+            #the new phase to consider end in j-1
+            for j in xrange(i+1, len(f)+1):
+                if cov[j-1]==1: break
+                
+                #found a segment not translated f[i,j]      
+                if f[i:j] in tm:
+                    covered = [0 for _ in f]
+                    s = 0
+                    n = 0
+                    
+                    #set covered transaltion and calcuate future cost which is the sum of all the untransalted segments
+                    for k in xrange(len(f)):
+                      if cov[k]==1 or (k >= i and k < j):
+                        covered[k] = 1
+                        n += 1 
+                        s = k + 1                  
+                    covered = tuple(covered)
+                    
+                    for phrase in tm[f[i:j]]:
+                      logprob = h.logprob + phrase.logprob #+ opts.eta * abs(h.end_pos + 1 - i)
+                      lm_state = h.lm_state
+
+                      new_english = h.english
+                      #language model prob of phrase
+                      for word in phrase.english.split():
+                          new_english += word + ' '
+                          (lm_state, word_logprob) = lm.score(lm_state, word)
+                          logprob += word_logprob
+                      logprob += lm.end(lm_state) if j == len(f) else 0.0
+                        
+                      new_hypothesis = hypothesis(logprob, lm_state, new_english,  j-1)
+                      #last two words and covered source sentece
+                      key = (lm_state, covered) 
+                      if key not in stacks[n] or stacks[n][key].logprob < logprob : # second case is recombination
+                        if len(stacks[n]) > size:
+                          if logprob  > stack_min[n]:
+                            stacks[n][key] = new_hypothesis
+                        elif len(stacks[n]) <= size:
+                          if logprob  < stack_min[n]: stack_min[n] = logprob 
+                          stacks[n][key] = new_hypothesis
+        _, best = max(heapq.nlargest(opts.rescore, stacks[-1].iteritems(), key=lambda (c, h): h.logprob), key=lambda (e,h): h.logprob)
+        del stacks
+        return winner
+
+
+for ind, f in enumerate(input_sents):
+    stack_size = opts.s 
+    best = decode(stack_size, f)
+    print best.english.strip()
+
+
+
