@@ -1,5 +1,6 @@
 Team Name: TAIWAN NO. 1 
 Team Member: sshiang, Fred, Bernie
+(You may want to look at their repository for more details/implementation)
 
 A. Result: (Dev set)
 1. Best system(Lower case, stemming, exact-match, HMM, symmetry classifier)
