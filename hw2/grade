@@ -10,12 +10,13 @@ optparser.add_option("-t", "--truth", dest="truth", default="data/train.gold", h
 (right, wrong) = (0.0,0.0)
 conf = [[0,0,0] for i in xrange(3)]
 for (i, (f_e_r, sg, sy)) in enumerate(zip(open(opts.input), open(opts.truth), sys.stdin)):
-  (g, y) = (int(sg), int(sy))
-  conf[g + 1][y + 1] += 1
-  if g == y:
-    right += 1
-  else:
-    wrong += 1
+  if i >= 5000:
+    (g, y) = (int(sg), int(sy))
+    conf[g + 1][y + 1] += 1
+    if g == y:
+        right += 1
+    else:
+        wrong += 1
 
 acc = right / (right + wrong)
 
